@@ -1,6 +1,6 @@
 import { ConstructApp } from '@construct-computer/app-sdk';
 
-const app = new ConstructApp({ name: 'mercadolibre', version: '0.1.1' });
+const app = new ConstructApp({ name: 'mercadolibre', version: '0.1.2' });
 
 /**
  * Mercado Libre site id → site metadata.
