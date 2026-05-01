@@ -1,7 +1,7 @@
 {
   "$schema": "https://registry.construct.computer/schemas/manifest.json",
   "name": "Mercado Libre",
-  "description": "Resolve Mercado Libre product codes (MLA, MLB, MLM, MLC, MLU, MLV, MCO, MPE, MEC) into full listing URLs and SEO slugs across every Mercado Libre / Mercado Livre country site.",
+  "description": "Resolve single or batch Mercado Libre product codes (MLA, MLB, MLM, MLC, MLU, MLV, MCO, MPE, MEC) into canonical product page URLs and SEO slugs without access tokens.",
   "author": {
     "name": "ankushKun",
     "url": "https://github.com/ankushKun"

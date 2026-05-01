@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Mercado Libre</title>
+  <title>Mercado Libre URL Resolver</title>
   <link rel="stylesheet" href="/sdk/construct.css">
   <script src="/sdk/construct.js"></script>
   <style>
@@ -15,76 +15,105 @@
       font-family: var(--c-font-sans, system-ui, -apple-system, "Segoe UI", sans-serif);
       -webkit-font-smoothing: antialiased;
     }
-
     main {
-      max-width: 28rem;
+      max-width: 42rem;
       margin: 0 auto;
-      padding: 40px 24px 32px;
+      padding: 32px 22px;
       display: flex;
       flex-direction: column;
-      gap: 24px;
+      gap: 20px;
     }
-
     .hero {
-      text-align: center;
       display: flex;
       flex-direction: column;
       gap: 8px;
     }
     .badge {
-      align-self: center;
+      align-self: flex-start;
       padding: 4px 10px;
       font-size: 10px;
-      font-weight: 600;
+      font-weight: 700;
       letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: var(--c-text-muted, rgba(228,228,237,0.45));
+      color: var(--c-text-muted, rgba(228,228,237,0.55));
       background: var(--c-surface, rgba(255,255,255,0.04));
       border: 1px solid var(--c-border, rgba(255,255,255,0.08));
       border-radius: 999px;
     }
     h1 {
       margin: 0;
-      font-size: 1.5rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
+      font-size: 1.65rem;
+      letter-spacing: -0.03em;
     }
     .tagline {
       margin: 0;
+      max-width: 36rem;
       font-size: 13px;
-      line-height: 1.55;
+      line-height: 1.6;
       color: var(--c-text-secondary, rgba(228,228,237,0.72));
     }
-
+    .mode-tabs, .actions, .examples {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    button {
+      font: inherit;
+    }
+    .mode-tab, .secondary-btn, .example-chip {
+      background: var(--c-surface, rgba(255,255,255,0.04));
+      color: var(--c-text-secondary, rgba(228,228,237,0.75));
+      border: 1px solid var(--c-border, rgba(255,255,255,0.1));
+      border-radius: 999px;
+      padding: 7px 12px;
+      cursor: pointer;
+    }
+    .mode-tab.active {
+      color: #fff;
+      background: var(--c-accent, #6366f1);
+      border-color: var(--c-accent, #6366f1);
+    }
     form {
       display: flex;
       flex-direction: column;
+      gap: 12px;
+    }
+    .panel {
+      display: none;
+      flex-direction: column;
       gap: 10px;
+    }
+    .panel.active {
+      display: flex;
     }
     label {
       font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
+      font-weight: 700;
       letter-spacing: 0.04em;
-      color: var(--c-text-muted, rgba(228,228,237,0.5));
+      text-transform: uppercase;
+      color: var(--c-text-muted, rgba(228,228,237,0.55));
     }
     .input-row {
       display: flex;
       gap: 8px;
     }
-    input[type="text"] {
-      flex: 1;
-      min-width: 0;
+    input, textarea {
       box-sizing: border-box;
+      width: 100%;
       background: var(--c-surface, rgba(255,255,255,0.04));
       color: var(--c-text, #e4e4ed);
       border: 1px solid var(--c-border, rgba(255,255,255,0.1));
       border-radius: var(--c-radius-md, 10px);
-      padding: 10px 12px;
+      padding: 11px 12px;
       font-family: var(--c-font-mono, "SF Mono", ui-monospace, monospace);
       font-size: 13px;
     }
-    input[type="text"]:focus {
+    textarea {
+      min-height: 132px;
+      resize: vertical;
+      line-height: 1.5;
+    }
+    input:focus, textarea:focus {
       outline: none;
       border-color: var(--c-accent, #6366f1);
     }
@@ -95,45 +124,22 @@
       border: 1px solid var(--c-accent, #6366f1);
       border-radius: var(--c-radius-md, 10px);
       padding: 10px 18px;
-      font-family: inherit;
-      font-size: 13px;
-      font-weight: 600;
+      font-weight: 700;
       cursor: pointer;
-      transition: filter 120ms ease, transform 120ms ease;
     }
-    .resolve-btn:hover { filter: brightness(1.1); }
-    .resolve-btn:active { transform: scale(0.98); }
-    .resolve-btn:disabled {
-      opacity: 0.6;
+    .resolve-btn:disabled, .secondary-btn:disabled {
+      opacity: 0.55;
       cursor: not-allowed;
-      filter: none;
-    }
-
-    .examples {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
     }
     .example-chip {
-      background: transparent;
-      color: var(--c-text-secondary, rgba(228,228,237,0.7));
-      border: 1px solid var(--c-border, rgba(255,255,255,0.1));
-      border-radius: 999px;
-      padding: 4px 10px;
       font-family: var(--c-font-mono, "SF Mono", ui-monospace, monospace);
       font-size: 11px;
-      cursor: pointer;
-      transition: border-color 120ms ease, color 120ms ease;
+      padding: 5px 10px;
     }
-    .example-chip:hover {
-      border-color: var(--c-accent, #6366f1);
-      color: var(--c-text, #e4e4ed);
-    }
-
     .result {
       display: none;
       flex-direction: column;
-      gap: 8px;
+      gap: 12px;
       padding: 14px;
       background: var(--c-surface, rgba(255,255,255,0.04));
       border: 1px solid var(--c-border, rgba(255,255,255,0.1));
@@ -141,112 +147,112 @@
     }
     .result.visible { display: flex; }
     .result.error { border-color: var(--c-error, #ef4444); }
-    .result-row {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-    .result-label {
-      font-size: 10px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: var(--c-text-muted, rgba(228,228,237,0.45));
-    }
-    .result-value {
-      font-family: var(--c-font-mono, "SF Mono", ui-monospace, monospace);
+    .result-grid {
+      display: grid;
+      grid-template-columns: minmax(90px, 0.45fr) minmax(0, 1.55fr);
+      gap: 8px 12px;
       font-size: 12.5px;
-      word-break: break-all;
-      color: var(--c-text, #e4e4ed);
     }
-    .result-value a {
+    .label {
+      color: var(--c-text-muted, rgba(228,228,237,0.55));
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-size: 10px;
+    }
+    .value {
+      min-width: 0;
+      font-family: var(--c-font-mono, "SF Mono", ui-monospace, monospace);
+      word-break: break-all;
+    }
+    .value a {
       color: var(--c-accent, #818cf8);
       text-decoration: none;
     }
-    .result-value a:hover { text-decoration: underline; }
-    .result.error .result-value { color: var(--c-error, #ef4444); }
-
+    .value a:hover { text-decoration: underline; }
+    .table-wrap {
+      overflow: auto;
+      border: 1px solid var(--c-border, rgba(255,255,255,0.08));
+      border-radius: var(--c-radius-md, 10px);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 680px;
+      font-size: 12px;
+    }
+    th, td {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--c-border, rgba(255,255,255,0.08));
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      color: var(--c-text-muted, rgba(228,228,237,0.55));
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    td {
+      font-family: var(--c-font-mono, "SF Mono", ui-monospace, monospace);
+      word-break: break-all;
+    }
+    tr:last-child td { border-bottom: 0; }
+    .status-error { color: var(--c-error, #ef4444); }
     footer {
-      margin-top: 8px;
       display: flex;
       justify-content: center;
     }
     .github-link {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 14px;
-      font-size: 12px;
-      font-weight: 500;
       color: var(--c-text-secondary, rgba(228,228,237,0.7));
       text-decoration: none;
-      border: 1px solid var(--c-border, rgba(255,255,255,0.08));
-      border-radius: var(--c-radius-md, 10px);
-      transition: color 140ms ease, border-color 140ms ease;
+      font-size: 12px;
     }
-    .github-link:hover {
-      color: var(--c-text, #e4e4ed);
-      border-color: var(--c-accent, #6366f1);
-    }
+    .github-link:hover { color: var(--c-text, #e4e4ed); }
   </style>
 </head>
 <body>
   <main>
     <header class="hero">
-      <span class="badge">Construct</span>
-      <h1>Mercado Libre</h1>
+      <span class="badge">Token-free resolver</span>
+      <h1>Mercado Libre URL Resolver</h1>
       <p class="tagline">
-        Paste any Mercado Libre product code or short <code>/p/&hellip;</code> link to get the full SEO URL and slug.
+        Resolve Mercado Libre product IDs into canonical product URLs and slugs. Use the resolved links with the browser when you need title, price, seller, or other visible page details.
       </p>
     </header>
 
+    <div class="mode-tabs" role="tablist" aria-label="Resolve mode">
+      <button type="button" class="mode-tab active" data-mode="single">Single</button>
+      <button type="button" class="mode-tab" data-mode="batch">Batch</button>
+    </div>
+
     <form id="resolve-form">
-      <label for="product-id">Product code or URL</label>
-      <div class="input-row">
-        <input
-          id="product-id"
-          name="product_id"
-          type="text"
-          placeholder="MLA61887851"
-          autocomplete="off"
-          spellcheck="false"
-          required
-        />
-        <button class="resolve-btn" type="submit" id="resolve-btn">Resolve</button>
-      </div>
+      <section class="panel active" id="single-panel">
+        <label for="product-id">Product code or /p/ URL</label>
+        <div class="input-row">
+          <input id="product-id" name="product_id" type="text" placeholder="MLA19791378" autocomplete="off" spellcheck="false" />
+          <button class="resolve-btn" type="submit" id="resolve-btn">Resolve</button>
+        </div>
+      </section>
+
+      <section class="panel" id="batch-panel">
+        <label for="product-ids">Product codes or pasted text</label>
+        <textarea id="product-ids" name="product_ids" placeholder="MLA19791378&#10;MLA50469491&#10;MLA54262263" spellcheck="false"></textarea>
+        <button class="resolve-btn" type="submit" id="batch-resolve-btn">Resolve batch</button>
+      </section>
+
       <div class="examples" aria-label="Examples">
-        <button type="button" class="example-chip" data-fill="MLA61887851">MLA61887851</button>
-        <button type="button" class="example-chip" data-fill="MLB2974485636">MLB2974485636</button>
-        <button type="button" class="example-chip" data-fill="MLM3193658272">MLM3193658272</button>
+        <button type="button" class="example-chip" data-fill="MLA19791378">MLA19791378</button>
+        <button type="button" class="example-chip" data-fill="MLA50469491">MLA50469491</button>
+        <button type="button" class="example-chip" data-fill="MLA54262263">MLA54262263</button>
+        <button type="button" class="example-chip" data-fill="https://www.mercadolibre.com.ar/p/MLA19791378">/p/ URL</button>
       </div>
     </form>
 
-    <section id="result" class="result" aria-live="polite">
-      <div class="result-row">
-        <span class="result-label" id="result-primary-label">URL</span>
-        <span class="result-value" id="result-primary"></span>
-      </div>
-      <div class="result-row" id="result-slug-row">
-        <span class="result-label">Slug</span>
-        <span class="result-value" id="result-slug"></span>
-      </div>
-      <div class="result-row" id="result-country-row">
-        <span class="result-label">Country</span>
-        <span class="result-value" id="result-country"></span>
-      </div>
-    </section>
+    <section id="result" class="result" aria-live="polite"></section>
 
     <footer>
-      <a
-        class="github-link"
-        href="https://github.com/ankushKun/mercadolibre-app"
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label="Mercado Libre App on GitHub"
-      >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
-        </svg>
+      <a class="github-link" href="https://github.com/ankushKun/mercadolibre-app" target="_blank" rel="noopener noreferrer">
         View on GitHub
       </a>
     </footer>
