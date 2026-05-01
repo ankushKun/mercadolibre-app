@@ -1,164 +1,257 @@
 <!doctype html>
 <html lang="en">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Sample App</title>
-    <link rel="stylesheet" href="/sdk/construct.css">
-    <script src="/sdk/construct.js"></script>
-    <style>
-      h1 { margin: 0 0 4px; font-size: 20px; font-weight: 600; }
-      p.subtitle { margin: 0 0 16px; color: var(--c-text-secondary, rgba(228,228,237,0.7)); font-size: 13px; }
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mercado Libre</title>
+  <link rel="stylesheet" href="/sdk/construct.css">
+  <script src="/sdk/construct.js"></script>
+  <style>
+    body {
+      margin: 0;
+      min-height: 100dvh;
+      background: var(--c-bg, #0f0f12);
+      color: var(--c-text, #e4e4ed);
+      font-family: var(--c-font-sans, system-ui, -apple-system, "Segoe UI", sans-serif);
+      -webkit-font-smoothing: antialiased;
+    }
 
-      textarea {
-        width: 100%;
-        box-sizing: border-box;
-        background: var(--c-surface, rgba(255,255,255,0.04));
-        color: var(--c-text, #e4e4ed);
-        border: 1px solid var(--c-border, rgba(255,255,255,0.08));
-        border-radius: var(--c-radius-md, 10px);
-        padding: 10px 12px;
-        font-family: inherit;
-        font-size: 13px;
-        resize: vertical;
-        min-height: 80px;
-      }
-      textarea:focus {
-        outline: none;
-        border-color: var(--c-accent, #6366f1);
-      }
+    main {
+      max-width: 28rem;
+      margin: 0 auto;
+      padding: 40px 24px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
 
-      .group { margin-bottom: 12px; }
-      .group-label {
-        font-size: 11px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-        color: var(--c-text-muted, rgba(228,228,237,0.4));
-        margin-bottom: 6px;
-      }
-      .group-buttons { display: flex; flex-wrap: wrap; gap: 6px; }
+    .hero {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .badge {
+      align-self: center;
+      padding: 4px 10px;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--c-text-muted, rgba(228,228,237,0.45));
+      background: var(--c-surface, rgba(255,255,255,0.04));
+      border: 1px solid var(--c-border, rgba(255,255,255,0.08));
+      border-radius: 999px;
+    }
+    h1 {
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .tagline {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.55;
+      color: var(--c-text-secondary, rgba(228,228,237,0.72));
+    }
 
-      button {
-        background: var(--c-surface, rgba(255,255,255,0.04));
-        color: var(--c-text, #e4e4ed);
-        border: 1px solid var(--c-border, rgba(255,255,255,0.08));
-        border-radius: var(--c-radius-sm, 6px);
-        padding: 6px 12px;
-        font-family: inherit;
-        font-size: 12px;
-        cursor: pointer;
-        transition: background 120ms ease, border-color 120ms ease;
-      }
-      button:hover {
-        background: var(--c-accent-muted, rgba(99,102,241,0.15));
-        border-color: var(--c-accent, #6366f1);
-      }
-      button:disabled { opacity: 0.5; cursor: not-allowed; }
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--c-text-muted, rgba(228,228,237,0.5));
+    }
+    .input-row {
+      display: flex;
+      gap: 8px;
+    }
+    input[type="text"] {
+      flex: 1;
+      min-width: 0;
+      box-sizing: border-box;
+      background: var(--c-surface, rgba(255,255,255,0.04));
+      color: var(--c-text, #e4e4ed);
+      border: 1px solid var(--c-border, rgba(255,255,255,0.1));
+      border-radius: var(--c-radius-md, 10px);
+      padding: 10px 12px;
+      font-family: var(--c-font-mono, "SF Mono", ui-monospace, monospace);
+      font-size: 13px;
+    }
+    input[type="text"]:focus {
+      outline: none;
+      border-color: var(--c-accent, #6366f1);
+    }
+    .resolve-btn {
+      flex-shrink: 0;
+      background: var(--c-accent, #6366f1);
+      color: #fff;
+      border: 1px solid var(--c-accent, #6366f1);
+      border-radius: var(--c-radius-md, 10px);
+      padding: 10px 18px;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: filter 120ms ease, transform 120ms ease;
+    }
+    .resolve-btn:hover { filter: brightness(1.1); }
+    .resolve-btn:active { transform: scale(0.98); }
+    .resolve-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      filter: none;
+    }
 
-      .output {
-        background: var(--c-surface, rgba(255,255,255,0.04));
-        border: 1px solid var(--c-border, rgba(255,255,255,0.08));
-        border-radius: var(--c-radius-md, 10px);
-        padding: 12px;
-        font-family: var(--c-font-mono, "SF Mono", ui-monospace, monospace);
-        font-size: 12.5px;
-        white-space: pre-wrap;
-        word-break: break-word;
-        min-height: 48px;
-      }
-      .output.error { color: var(--c-error, #ef4444); }
-      .label { font-size: 12px; color: var(--c-text-secondary, rgba(228,228,237,0.7)); margin-bottom: 6px; }
-    </style>
+    .examples {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .example-chip {
+      background: transparent;
+      color: var(--c-text-secondary, rgba(228,228,237,0.7));
+      border: 1px solid var(--c-border, rgba(255,255,255,0.1));
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-family: var(--c-font-mono, "SF Mono", ui-monospace, monospace);
+      font-size: 11px;
+      cursor: pointer;
+      transition: border-color 120ms ease, color 120ms ease;
+    }
+    .example-chip:hover {
+      border-color: var(--c-accent, #6366f1);
+      color: var(--c-text, #e4e4ed);
+    }
+
+    .result {
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+      padding: 14px;
+      background: var(--c-surface, rgba(255,255,255,0.04));
+      border: 1px solid var(--c-border, rgba(255,255,255,0.1));
+      border-radius: var(--c-radius-md, 10px);
+    }
+    .result.visible { display: flex; }
+    .result.error { border-color: var(--c-error, #ef4444); }
+    .result-row {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .result-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--c-text-muted, rgba(228,228,237,0.45));
+    }
+    .result-value {
+      font-family: var(--c-font-mono, "SF Mono", ui-monospace, monospace);
+      font-size: 12.5px;
+      word-break: break-all;
+      color: var(--c-text, #e4e4ed);
+    }
+    .result-value a {
+      color: var(--c-accent, #818cf8);
+      text-decoration: none;
+    }
+    .result-value a:hover { text-decoration: underline; }
+    .result.error .result-value { color: var(--c-error, #ef4444); }
+
+    footer {
+      margin-top: 8px;
+      display: flex;
+      justify-content: center;
+    }
+    .github-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--c-text-secondary, rgba(228,228,237,0.7));
+      text-decoration: none;
+      border: 1px solid var(--c-border, rgba(255,255,255,0.08));
+      border-radius: var(--c-radius-md, 10px);
+      transition: color 140ms ease, border-color 140ms ease;
+    }
+    .github-link:hover {
+      color: var(--c-text, #e4e4ed);
+      border-color: var(--c-accent, #6366f1);
+    }
+  </style>
 </head>
-  <body>
-    <h1>Sample App</h1>
-    <p class="subtitle">Text utilities plus a live demo of calling platform tools.</p>
+<body>
+  <main>
+    <header class="hero">
+      <span class="badge">Construct</span>
+      <h1>Mercado Libre</h1>
+      <p class="tagline">
+        Paste any Mercado Libre product code or short <code>/p/&hellip;</code> link to get the full SEO URL and slug.
+      </p>
+    </header>
 
-    <div class="label">Input</div>
-    <textarea id="input" placeholder="Type or paste text here…">Hello, World! 👋</textarea>
-
-    <div class="group">
-      <div class="group-label">Text</div>
-      <div class="group-buttons">
-        <button data-tool="slugify">Slugify</button>
-        <button data-tool="word_count">Word count</button>
-        <button data-tool="reverse">Reverse</button>
+    <form id="resolve-form">
+      <label for="product-id">Product code or URL</label>
+      <div class="input-row">
+        <input
+          id="product-id"
+          name="product_id"
+          type="text"
+          placeholder="MLA61887851"
+          autocomplete="off"
+          spellcheck="false"
+          required
+        />
+        <button class="resolve-btn" type="submit" id="resolve-btn">Resolve</button>
       </div>
-    </div>
-
-    <div class="group">
-      <div class="group-label">JSON</div>
-      <div class="group-buttons">
-        <button data-tool="json_format">Format</button>
-        <button data-tool="json_format" data-args='{"mode":"minify"}'>Minify</button>
-        <button data-tool="json_format" data-args='{"mode":"validate"}'>Validate</button>
+      <div class="examples" aria-label="Examples">
+        <button type="button" class="example-chip" data-fill="MLA61887851">MLA61887851</button>
+        <button type="button" class="example-chip" data-fill="MLB2974485636">MLB2974485636</button>
+        <button type="button" class="example-chip" data-fill="MLM3193658272">MLM3193658272</button>
       </div>
-    </div>
+    </form>
 
-    <div class="group">
-      <div class="group-label">Encode / Decode</div>
-      <div class="group-buttons">
-        <button data-tool="base64" data-args='{"mode":"encode"}'>Base64 encode</button>
-        <button data-tool="base64" data-args='{"mode":"decode"}'>Base64 decode</button>
-        <button data-tool="url_encode" data-args='{"mode":"encode"}'>URL encode</button>
-        <button data-tool="url_encode" data-args='{"mode":"decode"}'>URL decode</button>
+    <section id="result" class="result" aria-live="polite">
+      <div class="result-row">
+        <span class="result-label" id="result-primary-label">URL</span>
+        <span class="result-value" id="result-primary"></span>
       </div>
-    </div>
-
-    <div class="group">
-      <div class="group-label">Hash</div>
-      <div class="group-buttons">
-        <button data-tool="hash">SHA-256</button>
-        <button data-tool="hash" data-args='{"algorithm":"SHA-1"}'>SHA-1</button>
-        <button data-tool="hash" data-args='{"algorithm":"SHA-384"}'>SHA-384</button>
-        <button data-tool="hash" data-args='{"algorithm":"SHA-512"}'>SHA-512</button>
+      <div class="result-row" id="result-slug-row">
+        <span class="result-label">Slug</span>
+        <span class="result-value" id="result-slug"></span>
       </div>
-    </div>
-
-    <div class="group">
-      <div class="group-label">Generate</div>
-      <div class="group-buttons">
-        <button data-tool="uuid">UUID</button>
-        <button data-tool="uuid" data-args='{"count":5}'>5 UUIDs</button>
-        <button data-tool="timestamp">Now</button>
-        <button data-tool="timestamp" data-label="parse">Parse timestamp</button>
+      <div class="result-row" id="result-country-row">
+        <span class="result-label">Country</span>
+        <span class="result-value" id="result-country"></span>
       </div>
-    </div>
+    </section>
 
-    <div class="group">
-      <div class="group-label">Platform (via ctx.construct)</div>
-      <div class="group-buttons">
-        <button
-          data-tool="send_notification"
-          data-args='{"title":"Hello from Text Tools","body":"This notification was sent via the platform.","variant":"info"}'
-          data-skip-input>
-          Send test notification
-        </button>
-        <button
-          data-tool="send_notification"
-          data-args='{"title":"All set","body":"Your task finished successfully.","variant":"success"}'
-          data-skip-input>
-          Success notification
-        </button>
-        <button
-          data-tool="list_upcoming_events"
-          data-args='{"days":7,"max_results":5}'
-          data-skip-input>
-          Upcoming events (7d)
-        </button>
-        <button
-          data-tool="list_upcoming_events"
-          data-args='{"days":1,"max_results":10}'
-          data-skip-input>
-          Today
-        </button>
-      </div>
-    </div>
+    <footer>
+      <a
+        class="github-link"
+        href="https://github.com/ankushKun/mercadolibre-app"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Mercado Libre App on GitHub"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+        </svg>
+        View on GitHub
+      </a>
+    </footer>
+  </main>
 
-    <div class="label">Output</div>
-    <div id="output" class="output">—</div>
-
-    <script src="app.js"></script>
-  </body>
+  <script src="app.js"></script>
+</body>
 </html>

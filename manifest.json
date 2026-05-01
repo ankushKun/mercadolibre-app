@@ -1,27 +1,38 @@
 {
   "$schema": "https://registry.construct.computer/schemas/manifest.json",
-  "name": "Text Tools",
-  "description": "Handy text utilities plus a demo of calling platform tools (notifications, calendar) from an app.",
+  "name": "Mercado Libre",
+  "description": "Resolve Mercado Libre product codes (MLA, MLB, MLM, MLC, MLU, MLV, MCO, MPE, MEC) into full listing URLs and SEO slugs across every Mercado Libre / Mercado Livre country site.",
   "author": {
-    "name": "Construct",
-    "url": "https://github.com/construct-computer"
+    "name": "ankushKun",
+    "url": "https://github.com/ankushKun"
   },
-  "owners": ["construct-computer"],
+  "owners": ["ankushkun"],
   "icon": "ui/icon.svg",
-  "categories": ["utilities"],
-  "tags": ["text", "encoding", "example", "demo", "gateway"],
+  "categories": ["shopping"],
+  "tags": [
+    "mercadolibre",
+    "mercadolivre",
+    "ecommerce",
+    "latam",
+    "product",
+    "url-resolver"
+  ],
   "ui": {
     "entry": "ui/index.html",
     "width": 720,
     "height": 640
   },
   "permissions": {
-    "storage": "64KB",
-    "uses": {
-      "tools": [
-        "notify.send",
-        "calendar.list_events"
-      ]
-    }
+    "network": [
+      "www.mercadolibre.com.ar",
+      "www.mercadolivre.com.br",
+      "www.mercadolibre.com.mx",
+      "www.mercadolibre.cl",
+      "www.mercadolibre.com.uy",
+      "www.mercadolibre.com.ve",
+      "www.mercadolibre.com.co",
+      "www.mercadolibre.com.pe",
+      "www.mercadolibre.com.ec"
+    ]
   }
 }
