@@ -57,6 +57,18 @@
       flex-wrap: wrap;
       gap: 8px;
     }
+    .guidance-callout {
+      padding: 12px 14px;
+      background: var(--c-surface, rgba(255,255,255,0.04));
+      border: 1px solid var(--c-border, rgba(255,255,255,0.1));
+      border-radius: var(--c-radius-md, 10px);
+      color: var(--c-text-secondary, rgba(228,228,237,0.76));
+      font-size: 12.5px;
+      line-height: 1.55;
+    }
+    .guidance-callout strong {
+      color: var(--c-text, #e4e4ed);
+    }
     button {
       font: inherit;
     }
@@ -217,13 +229,18 @@
       <span class="badge">Token-free resolver</span>
       <h1>Mercado Libre URL Resolver</h1>
       <p class="tagline">
-        Resolve Mercado Libre product IDs into canonical product URLs and slugs. Use the resolved links with the browser when you need title, price, seller, or other visible page details.
+        Resolve Mercado Libre product IDs into canonical product URLs, large-batch CSV scaffolds, and browser-fill plans for product details.
       </p>
     </header>
+
+    <aside class="guidance-callout">
+      <strong>Agent guidance:</strong> for large product-detail jobs, prepare the CSV scaffold here first, then open returned browser URLs only for fields like title, brand, model, price, original price, and specs.
+    </aside>
 
     <div class="mode-tabs" role="tablist" aria-label="Resolve mode">
       <button type="button" class="mode-tab active" data-mode="single">Single</button>
       <button type="button" class="mode-tab" data-mode="batch">Batch</button>
+      <button type="button" class="mode-tab" data-mode="large">CSV scaffold</button>
     </div>
 
     <form id="resolve-form">

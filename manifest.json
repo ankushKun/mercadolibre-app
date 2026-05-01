@@ -1,7 +1,7 @@
 {
   "$schema": "https://registry.construct.computer/schemas/manifest.json",
   "name": "Mercado Libre",
-  "description": "Resolve single or batch Mercado Libre product codes into canonical product page URLs and SEO slugs across Latin America without access tokens.",
+  "description": "Resolve Mercado Libre product codes into browser-ready URLs and large-batch CSV scaffolds for details like title, brand, model, price, original price, and specs.",
   "author": {
     "name": "ankushKun",
     "url": "https://github.com/ankushKun"
