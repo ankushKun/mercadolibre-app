@@ -1,6 +1,6 @@
 import { ConstructApp } from '@construct-computer/app-sdk';
 
-const app = new ConstructApp({ name: 'mercadolibre', version: '0.1.0' });
+const app = new ConstructApp({ name: 'mercadolibre', version: '0.1.1' });
 
 /**
  * Mercado Libre site id → site metadata.
@@ -16,6 +16,15 @@ const SITES = {
   MCO: { origin: 'https://www.mercadolibre.com.co', country: 'Colombia' },
   MPE: { origin: 'https://www.mercadolibre.com.pe', country: 'Peru' },
   MEC: { origin: 'https://www.mercadolibre.com.ec', country: 'Ecuador' },
+  MPA: { origin: 'https://www.mercadolibre.com.pa', country: 'Panama' },
+  MPY: { origin: 'https://www.mercadolibre.com.py', country: 'Paraguay' },
+  MRD: { origin: 'https://www.mercadolibre.com.do', country: 'Dominican Republic' },
+  MBO: { origin: 'https://www.mercadolibre.com.bo', country: 'Bolivia' },
+  MNI: { origin: 'https://www.mercadolibre.com.ni', country: 'Nicaragua' },
+  MCR: { origin: 'https://www.mercadolibre.co.cr', country: 'Costa Rica' },
+  MSV: { origin: 'https://www.mercadolibre.com.sv', country: 'El Salvador' },
+  MHN: { origin: 'https://www.mercadolibre.com.hn', country: 'Honduras' },
+  MGT: { origin: 'https://www.mercadolibre.com.gt', country: 'Guatemala' },
 } as const;
 
 type SiteId = keyof typeof SITES;
@@ -32,6 +41,17 @@ const FETCH_TIMEOUT_MS = 8_000;
  */
 const ML_APP_UA =
   'MercadoLibre/10.3.0 CFNetwork Darwin/23.0.0 AppleWebKit/605.1.15';
+
+function formatPrice(price: number, currency: string): string {
+  return `${currency} ${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+function formatPriceRange(prices: number[], currency: string): string {
+  if (prices.length === 0) return `No ${currency} prices`;
+  const min = Math.min(...prices);
+  const max = Math.max(...prices);
+  return min === max ? formatPrice(min, currency) : `${formatPrice(min, currency)} - ${formatPrice(max, currency)}`;
+}
 
 async function fetchWithTimeout(url: string, init: RequestInit): Promise<Response> {
   const controller = new AbortController();

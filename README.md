@@ -13,7 +13,7 @@ The app intentionally returns only browser-ready URL metadata. For rich product 
 | `mercadolibre_resolve_product_url` | Resolve one product ID or `/p/{id}` URL into a browser-ready URL row with `status`, `product_id`, `url`, `slug`, `site_id`, and `country`. |
 | `mercadolibre_resolve_product_urls` | Resolve up to 25 product IDs in one call and return JSON rows or minimal resolver CSV. Batch rows can be `ok`, `blocked`, `partial`, or `error`. |
 
-Supported prefixes: `MLA` Argentina, `MLB` Brazil, `MLM` Mexico, `MLC` Chile, `MLU` Uruguay, `MLV` Venezuela, `MCO` Colombia, `MPE` Peru, `MEC` Ecuador.
+Supported prefixes: `MLA` Argentina, `MLB` Brazil, `MLM` Mexico, `MLC` Chile, `MLU` Uruguay, `MLV` Venezuela, `MCO` Colombia, `MPE` Peru, `MEC` Ecuador, `MPA` Panama, `MPY` Paraguay, `MRD` Dominican Republic, `MBO` Bolivia, `MNI` Nicaragua, `MCR` Costa Rica, `MSV` El Salvador, `MHN` Honduras, `MGT` Guatemala.
 
 ## Getting Started
 
@@ -96,7 +96,7 @@ mercadolibre-app/
 │   ├── app.js
 │   ├── construct.d.ts
 │   ├── jsconfig.json
-│   └── icon.svg
+│   └── icon.png
 ├── package.json
 └── README.md
 ```

@@ -1,13 +1,13 @@
 {
   "$schema": "https://registry.construct.computer/schemas/manifest.json",
   "name": "Mercado Libre",
-  "description": "Resolve single or batch Mercado Libre product codes (MLA, MLB, MLM, MLC, MLU, MLV, MCO, MPE, MEC) into canonical product page URLs and SEO slugs without access tokens.",
+  "description": "Resolve single or batch Mercado Libre product codes into canonical product page URLs and SEO slugs across Latin America without access tokens.",
   "author": {
     "name": "ankushKun",
     "url": "https://github.com/ankushKun"
   },
   "owners": ["ankushkun"],
-  "icon": "ui/icon.svg",
+  "icon": "ui/icon.png",
   "categories": ["shopping"],
   "tags": [
     "mercadolibre",
@@ -32,7 +32,16 @@
       "www.mercadolibre.com.ve",
       "www.mercadolibre.com.co",
       "www.mercadolibre.com.pe",
-      "www.mercadolibre.com.ec"
+      "www.mercadolibre.com.ec",
+      "www.mercadolibre.com.pa",
+      "www.mercadolibre.com.py",
+      "www.mercadolibre.com.do",
+      "www.mercadolibre.com.bo",
+      "www.mercadolibre.com.ni",
+      "www.mercadolibre.co.cr",
+      "www.mercadolibre.com.sv",
+      "www.mercadolibre.com.hn",
+      "www.mercadolibre.com.gt"
     ]
   }
 }
