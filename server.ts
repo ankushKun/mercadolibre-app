@@ -37,6 +37,9 @@ const SITE_IDS = Object.keys(SITES) as SiteId[];
 const MAX_BATCH_SIZE = 25;
 const MAX_PREPARE_BATCH_SIZE = 250;
 const FETCH_TIMEOUT_MS = 8_000;
+const BATCH_FETCH_TIMEOUT_MS = 2_500;
+const BATCH_ITEM_TIMEOUT_MS = 4_000;
+const BATCH_CONCURRENCY = 5;
 const RECOMMENDED_NEXT_ACTION: RecommendedNextAction = 'open_url_in_browser';
 const BROWSER_GUIDANCE =
   'This resolver returns URL metadata only. Open open_in_browser_url with the browser tool to view title, price, seller, shipping, and other visible product details.';
@@ -103,9 +106,9 @@ function formatPriceRange(prices: number[], currency: string): string {
   return min === max ? formatPrice(min, currency) : `${formatPrice(min, currency)} - ${formatPrice(max, currency)}`;
 }
 
-async function fetchWithTimeout(url: string, init: RequestInit): Promise<Response> {
+async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs = FETCH_TIMEOUT_MS): Promise<Response> {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort('request_timeout'), FETCH_TIMEOUT_MS);
+  const timeout = setTimeout(() => controller.abort('request_timeout'), timeoutMs);
   try {
     return await fetch(url, { ...init, signal: controller.signal });
   } finally {
@@ -113,7 +116,7 @@ async function fetchWithTimeout(url: string, init: RequestInit): Promise<Respons
   }
 }
 
-async function fetchCanonicalProductUrl(shortUrl: string): Promise<Response> {
+async function fetchCanonicalProductUrl(shortUrl: string, timeoutMs = FETCH_TIMEOUT_MS): Promise<Response> {
   const headers = {
     'User-Agent': ML_APP_UA,
     Accept: '*/*',
@@ -121,9 +124,9 @@ async function fetchCanonicalProductUrl(shortUrl: string): Promise<Response> {
   let lastError: unknown;
   for (let attempt = 0; attempt < 2; attempt += 1) {
     try {
-      let res = await fetchWithTimeout(shortUrl, { method: 'HEAD', redirect: 'follow', headers });
+      let res = await fetchWithTimeout(shortUrl, { method: 'HEAD', redirect: 'follow', headers }, timeoutMs);
       if (res.status === 405 || res.status === 501) {
-        res = await fetchWithTimeout(shortUrl, { method: 'GET', redirect: 'follow', headers });
+        res = await fetchWithTimeout(shortUrl, { method: 'GET', redirect: 'follow', headers }, timeoutMs);
       }
       if (res.status < 500 || attempt === 1) return res;
     } catch (err) {
@@ -163,8 +166,8 @@ function parseProductId(raw: unknown): string {
   if (!s) {
     throw new Error('product_id is required (e.g. MLA19791378).');
   }
-  const urlMatch = s.match(/\/p\/([^/?#]+)/);
-  const candidate = urlMatch ? urlMatch[1] : s;
+  const urlMatch = s.match(/\/p\/([^/?#]+)/i);
+  const candidate = (urlMatch ? urlMatch[1] : s).toUpperCase();
   if (!PRODUCT_ID_RE.test(candidate)) {
     throw new Error(
       `Invalid product_id "${candidate}". Expected the canonical Mercado Libre format: 2–4 uppercase letters followed by digits, with no separators (e.g. MLA19791378).`,
@@ -310,7 +313,9 @@ interface PreparedProductBatch {
   };
 }
 
-async function resolveProductUrl(rawProductId: unknown, site?: unknown): Promise<ResolvedProductUrl> {
+type ProductResolver = (input: unknown, site?: unknown, options?: { fetchTimeoutMs?: number }) => Promise<ResolvedProductUrl>;
+
+async function resolveProductUrl(rawProductId: unknown, site?: unknown, options: { fetchTimeoutMs?: number } = {}): Promise<ResolvedProductUrl> {
   const productId = parseProductId(rawProductId);
   const siteMeta = siteFromArg(site, productId);
   const fallbackUrl = fallbackProductUrl(productId, siteMeta.origin);
@@ -324,7 +329,7 @@ async function resolveProductUrl(rawProductId: unknown, site?: unknown): Promise
 
   let res: Response;
   try {
-    res = await fetchCanonicalProductUrl(fallbackUrl);
+    res = await fetchCanonicalProductUrl(fallbackUrl, options.fetchTimeoutMs);
   } catch (err) {
     return {
       ...base,
@@ -389,15 +394,46 @@ async function resolveProductUrl(rawProductId: unknown, site?: unknown): Promise
   };
 }
 
+function fallbackResolvedProductUrl(rawProductId: unknown, site: unknown, warning: string): ResolvedProductUrl {
+  const productId = parseProductId(rawProductId);
+  const siteMeta = siteFromArg(site, productId);
+  const fallbackUrl = fallbackProductUrl(productId, siteMeta.origin);
+  return {
+    product_id: productId,
+    site_id: siteMeta.site_id,
+    country: siteMeta.country,
+    fallback_url: fallbackUrl,
+    source_url: sourceUrlFromInput(rawProductId),
+    status: 'partial',
+    url: fallbackUrl,
+    slug: null,
+    needs_browser: true,
+    recommended_next_action: RECOMMENDED_NEXT_ACTION,
+    open_in_browser_url: fallbackUrl,
+    browser_guidance: BROWSER_GUIDANCE,
+    warning,
+  };
+}
+
+function normalizeBatchInput(raw: unknown): string {
+  const s = String(raw ?? '').trim();
+  if (!s) return '';
+  try {
+    return parseProductId(s);
+  } catch {
+    return s.toUpperCase();
+  }
+}
+
 function collectBatchInputs(args: Record<string, unknown>, max: number): { inputs: string[]; truncated: number } {
   const values: string[] = [];
   const productIds = args.product_ids;
   if (Array.isArray(productIds)) {
-    values.push(...productIds.map((value) => String(value).trim()).filter(Boolean));
+    values.push(...productIds.map(normalizeBatchInput).filter(Boolean));
   }
   const text = typeof args.text === 'string' ? args.text : '';
-  const matches = text.match(/[A-Z]{2,4}\d+/g);
-  if (matches) values.push(...matches);
+  const matches = text.match(/[A-Z]{2,4}\d+/gi);
+  if (matches) values.push(...matches.map((match) => match.toUpperCase()));
   return {
     inputs: values.slice(0, max),
     truncated: Math.max(0, values.length - max),
@@ -450,6 +486,22 @@ function rowsToCsv(rows: BatchRow[]): string {
     headers.join(','),
     ...rows.map((row) => headers.map((header) => csvEscape(row[header as keyof BatchRow])).join(',')),
   ].join('\n');
+}
+
+function compactBatchRow(row: BatchRow): Record<string, unknown> {
+  return {
+    input: row.input,
+    status: row.status,
+    product_id: row.product_id,
+    site_id: row.site_id,
+    country: row.country,
+    url: row.url,
+    open_in_browser_url: row.open_in_browser_url,
+    slug: row.slug,
+    needs_browser: row.needs_browser,
+    warning: row.warning,
+    error: row.error,
+  };
 }
 
 function currencyForSite(siteId: unknown): string {
@@ -560,9 +612,59 @@ function buildBrowserFillPlan(rows: ProductDetailScaffoldRow[]): PreparedProduct
   };
 }
 
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  concurrency: number,
+  mapper: (item: T, index: number) => Promise<R>,
+): Promise<R[]> {
+  const results = new Array<R>(items.length);
+  let nextIndex = 0;
+
+  const workers = Array.from({ length: Math.min(concurrency, items.length) }, async () => {
+    while (nextIndex < items.length) {
+      const index = nextIndex;
+      nextIndex += 1;
+      results[index] = await mapper(items[index], index);
+    }
+  });
+  await Promise.all(workers);
+  return results;
+}
+
+async function resolveWithBudget(input: string, site: unknown, resolver: ProductResolver): Promise<BatchRow> {
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  try {
+    const resolved = await Promise.race([
+      resolver(input, site, { fetchTimeoutMs: BATCH_FETCH_TIMEOUT_MS }),
+      new Promise<ResolvedProductUrl>((resolve) => {
+        timeout = setTimeout(() => {
+          resolve(fallbackResolvedProductUrl(
+            input,
+            site,
+            `Resolver exceeded the ${BATCH_ITEM_TIMEOUT_MS}ms batch budget. Open open_in_browser_url with the browser tool.`,
+          ));
+        }, BATCH_ITEM_TIMEOUT_MS);
+      }),
+    ]);
+    return { input, ...resolved };
+  } catch (err) {
+    return {
+      input,
+      status: 'error',
+      error: err instanceof Error ? err.message : String(err),
+    };
+  } finally {
+    if (timeout) clearTimeout(timeout);
+  }
+}
+
+async function resolveBatchRows(inputs: string[], site: unknown, resolver: ProductResolver = resolveProductUrl): Promise<BatchRow[]> {
+  return mapWithConcurrency(inputs, BATCH_CONCURRENCY, (input) => resolveWithBudget(input, site, resolver));
+}
+
 async function buildPreparedProductBatch(
   args: Record<string, unknown>,
-  resolver: (input: unknown, site?: unknown) => Promise<ResolvedProductUrl> = resolveProductUrl,
+  resolver: ProductResolver = resolveProductUrl,
 ): Promise<PreparedProductBatch> {
   const collected = collectBatchInputs(args, MAX_PREPARE_BATCH_SIZE);
   const deduped = dedupeInputs(collected.inputs);
@@ -570,18 +672,7 @@ async function buildPreparedProductBatch(
     throw new Error('Provide product_ids or text containing at least one Mercado Libre product code.');
   }
 
-  const rows: BatchRow[] = [];
-  for (const input of deduped.inputs) {
-    try {
-      rows.push({ input, ...(await resolver(input, args.site)) });
-    } catch (err) {
-      rows.push({
-        input,
-        status: 'error',
-        error: err instanceof Error ? err.message : String(err),
-      });
-    }
-  }
+  const rows = await resolveBatchRows(deduped.inputs, args.site, resolver);
 
   const scaffoldRows = rows.map(scaffoldRow);
   const chunks = chunkArray(scaffoldRows, MAX_BATCH_SIZE).map((chunk, index) => ({
@@ -615,7 +706,7 @@ async function buildPreparedProductBatch(
     csv_headers: detailCsvHeaders(scaffoldRows),
     detail_fields: [...DETAIL_FIELDS],
     missing_browser_fields: [...DETAIL_FIELDS],
-    recommended_browser_strategy: 'Use this CSV scaffold first. Only open open_in_browser_url in the browser for rows where the user needs product details such as title, brand, model, price, original price, or specs like power. Mark browser_status for each attempted row.',
+    recommended_browser_strategy: 'Use this CSV scaffold first. Only open open_in_browser_url in the browser for rows where the user needs product details such as title, brand, model, price, original price, or specs like power. Work in small browser batches and mark browser_status for each attempted row. Do not use unauthenticated api.mercadolibre.com/items calls for public product details; those endpoints may require auth/policy clearance.',
     browser_fill_plan: buildBrowserFillPlan(scaffoldRows),
     rows_preview: previewRows,
     csv_preview: detailRowsToCsv(previewRows),
@@ -682,28 +773,17 @@ app.tool('mercadolibre_resolve_product_urls', {
       throw new Error('Provide product_ids or text containing at least one Mercado Libre product code.');
     }
 
-    const rows: BatchRow[] = [];
-    for (const input of inputs) {
-      try {
-        rows.push({ input, ...(await resolveProductUrl(input, args.site)) });
-      } catch (err) {
-        rows.push({
-          input,
-          status: 'error',
-          error: err instanceof Error ? err.message : String(err),
-        });
-      }
-    }
+    const rows = await resolveBatchRows(inputs, args.site);
 
     const outputFormat = (args.output_format === 'csv' ? 'csv' : 'json') as OutputFormat;
     if (outputFormat === 'csv') return rowsToCsv(rows);
-    return JSON.stringify({ rows, count: rows.length }, null, 2);
+    return JSON.stringify({ rows: rows.map(compactBatchRow), count: rows.length }, null, 2);
   },
 });
 
 app.tool('mercadolibre_prepare_product_batch', {
   description:
-    `Prepare a high-volume Mercado Libre product-detail batch for CSV output. Use this app tool first for large requests like "fetch details for these 100 MercadoLibre IDs and prepare a CSV." It accepts up to ${MAX_PREPARE_BATCH_SIZE} product IDs or pasted text, deduplicates inputs, resolves browser-ready product URLs internally, and returns a compact summary plus a CSV artifact scaffold. The scaffold includes columns for Product ID, Title, Brand, Model, Price, Original Price, Power, URL, browser status, and notes. This tool does not itself extract rendered page details; title, brand, model, price, original_price, power_w, seller, condition, and shipping are marked as browser-fill fields. After this tool returns, use browser only for requested rich fields and write those values into the CSV scaffold. Do not use terminal, curl, Python requests, raw Mercado Libre API probing, vendor CLIs, search-engine scraping, or repeated single-ID calls before this batch tool.`,
+    `Prepare a high-volume Mercado Libre product-detail batch for CSV output. Use this app tool first for large requests like "fetch details for these 100 MercadoLibre IDs and prepare a CSV." It accepts up to ${MAX_PREPARE_BATCH_SIZE} product IDs or pasted text, deduplicates inputs, resolves browser-ready product URLs internally, and returns a compact summary plus a CSV artifact scaffold. The scaffold includes columns for Product ID, Title, Brand, Model, Price, Original Price, Power, URL, browser status, and notes. This tool does not itself extract rendered page details; title, brand, model, price, original_price, power_w, seller, condition, and shipping are marked as browser-fill fields. After this tool returns, use browser only for requested rich fields and write those values into the CSV scaffold. For 100+ products, continue with browser batches rather than raw API shortcuts. Do not use terminal, curl, Python requests, unauthenticated api.mercadolibre.com/items calls, raw Mercado Libre API probing, vendor CLIs, search-engine scraping, or repeated single-ID calls before this batch tool.`,
   parameters: {
     product_ids: {
       type: 'array',
@@ -730,10 +810,14 @@ app.tool('mercadolibre_prepare_product_batch', {
 
 export {
   MAX_BATCH_SIZE,
+  BATCH_ITEM_TIMEOUT_MS,
   MAX_PREPARE_BATCH_SIZE,
   DETAIL_CSV_COLUMNS,
   buildPreparedProductBatch,
+  collectBatchInputs,
   detailRowsToCsv,
+  parseBatchInputs,
+  resolveBatchRows,
 };
 
 export default app;

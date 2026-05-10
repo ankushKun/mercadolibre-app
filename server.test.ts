@@ -1,10 +1,14 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  BATCH_ITEM_TIMEOUT_MS,
   MAX_BATCH_SIZE,
   MAX_PREPARE_BATCH_SIZE,
   buildPreparedProductBatch,
+  collectBatchInputs,
   detailRowsToCsv,
+  parseBatchInputs,
+  resolveBatchRows,
 } from './server';
 
 function mockResolved(productId: string) {
@@ -97,4 +101,48 @@ test('detail rows CSV preserves stable product-detail columns', () => {
   assert.match(csv, /Title,Brand,Model/);
   assert.match(csv, /Price \(ARS\),Currency,Original Price \(ARS\),Power \(W\)/);
   assert.match(csv, /Licuadora Oster,Oster,BLSTBG4655B/);
+});
+
+test('batch input parsing normalizes lowercase IDs from text and arrays', () => {
+  assert.deepEqual(
+    parseBatchInputs({
+      product_ids: ['mla123456', 'https://www.mercadolibre.com.ar/example/p/mla654321'],
+      text: 'also check mlb999888 and MLM777666',
+    }),
+    ['MLA123456', 'MLA654321', 'MLB999888', 'MLM777666'],
+  );
+
+  const capped = collectBatchInputs({ text: 'mla1 mla2 mla3' }, 2);
+  assert.deepEqual(capped.inputs, ['MLA1', 'MLA2']);
+  assert.equal(capped.truncated, 1);
+});
+
+test('batch resolver runs with bounded concurrency instead of sequentially', async () => {
+  const inputs = ['MLA500001', 'MLA500002', 'MLA500003', 'MLA500004', 'MLA500005'];
+  let active = 0;
+  let maxActive = 0;
+  const rows = await resolveBatchRows(inputs, undefined, async (input) => {
+    active += 1;
+    maxActive = Math.max(maxActive, active);
+    await new Promise((resolve) => setTimeout(resolve, 25));
+    active -= 1;
+    return mockResolved(String(input));
+  });
+
+  assert.equal(rows.length, inputs.length);
+  assert.ok(maxActive > 1, 'batch resolver should overlap work');
+  assert.deepEqual(rows.map((row) => row.product_id), inputs);
+});
+
+test('batch resolver returns partial fallback when a row exceeds the item budget', async () => {
+  const startedAt = Date.now();
+  const rows = await resolveBatchRows(['MLA600001'], undefined, async () => {
+    await new Promise((resolve) => setTimeout(resolve, BATCH_ITEM_TIMEOUT_MS + 200));
+    return mockResolved('MLA600001');
+  });
+
+  assert.equal(rows[0].status, 'partial');
+  assert.equal(rows[0].product_id, 'MLA600001');
+  assert.match(rows[0].warning || '', /batch budget/i);
+  assert.ok(Date.now() - startedAt < BATCH_ITEM_TIMEOUT_MS + 1000);
 });
