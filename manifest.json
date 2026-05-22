@@ -43,5 +43,19 @@
       "www.mercadolibre.com.hn",
       "www.mercadolibre.com.gt"
     ]
-  }
+  },
+  "tools": [
+    {
+      "name": "mercadolibre_resolve_product_url",
+      "description": "Resolve one Mercado Libre product code to a canonical product page URL and URL metadata."
+    },
+    {
+      "name": "mercadolibre_resolve_product_urls",
+      "description": "Resolve multiple Mercado Libre product codes to browser-ready product URLs."
+    },
+    {
+      "name": "mercadolibre_prepare_product_batch",
+      "description": "Prepare a large Mercado Libre product-detail CSV scaffold with browser-ready URLs."
+    }
+  ]
 }
